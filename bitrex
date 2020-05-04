@@ -1,0 +1,32 @@
+import finplot as fplt
+import numpy as np
+import pandas as pd
+import requests
+ 
+# pull some data
+symbol = 'USDT-BTC'
+url = 'https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName=%s&tickInterval=fiveMin' % symbol
+data = requests.get(url).json()
+ 
+# format it in pandas
+df = pd.DataFrame(data['result'])
+df = df.rename(columns={'T':'time', 'O':'open', 'C':'close', 'H':'high', 'L':'low', 'V':'volume'})
+df = df.astype({'time':'datetime64[ns]'})
+ 
+# create three plots
+ax,ax2 = fplt.create_plot(symbol, rows=2)
+ 
+# plot candle sticks
+candles = df[['time','open','close','high','low']]
+fplt.candlestick_ochl(candles, ax=ax)
+ 
+# put an MA in there
+fplt.plot(df['time'], df['close'].rolling(25).mean(), ax=ax, color='#00f', legend='ma-25')
+ 
+ 
+# finally a volume bar chart in our third plot
+volumes = df[['time','open','close','volume']]
+fplt.volume_ocv(volumes, ax=ax2)
+ 
+# we're done
+fplt.show()
